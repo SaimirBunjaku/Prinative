@@ -3,8 +3,6 @@
 A simple React Native task management app built with Expo for the PRITECH technical assessment.
 
 ## Features
-
-### Required
 - **Task list screen** — view all tasks with title and description
 - **Add new task** — form with title and description
 - **Toggle completion** — mark tasks as completed or pending
@@ -12,8 +10,6 @@ A simple React Native task management app built with Expo for the PRITECH techni
 - **Task details view** — full task info with status and created date
 - **Input validation** — title is required (min 3 characters)
 - **Public API integration** — initial tasks loaded from [JSONPlaceholder](https://jsonplaceholder.typicode.com/todos)
-
-### Bonus
 - **Search** — filter tasks by title
 - **Status filter** — show All, Pending, or Done tasks
 - **Local persistence** — tasks saved with AsyncStorage
@@ -64,7 +60,7 @@ src/
 
 3. **Start the development server**
    ```bash
-   npm start
+   npm start (npx expo start)
    ```
 
 4. **Open the app**
@@ -80,17 +76,23 @@ src/
 
 ## Screenshots
 
-_Add screenshots or a screen recording here before submission._
+<img width="378" height="818" alt="image" src="https://github.com/user-attachments/assets/ab49b9b7-f8b6-4a0f-92c1-b073c3a3a94e" />
+<img width="378" height="821" alt="image" src="https://github.com/user-attachments/assets/fe484b63-3afc-49d7-8daf-22c55f169039" />
+<img width="375" height="817" alt="image" src="https://github.com/user-attachments/assets/f7eef1b0-216e-436f-80c4-045f8f85fe4d" />
+<img width="379" height="817" alt="image" src="https://github.com/user-attachments/assets/b66c3420-4ab0-47f9-a3f5-9d8a31809d26" />
+<img width="378" height="819" alt="image" src="https://github.com/user-attachments/assets/eaceb67c-e731-4ec5-9176-76851d7d8647" />
+
+
+
+
 
 ## Scripts
 
-| Command        | Description              |
-|----------------|--------------------------|
-| `npm start`    | Start Expo dev server    |
-| `npm run android` | Open on Android       |
-| `npm run ios`  | Open on iOS (macOS only) |
-| `npm run web`  | Open in browser          |
+| Command           | Description              |
+|-------------------|--------------------------|
+| `npm start expo`  | Start Expo dev server    |
+
 
 ## Author
-
+Saimir Bunjaku
 Built for PRITECH React Native Technical Task.
