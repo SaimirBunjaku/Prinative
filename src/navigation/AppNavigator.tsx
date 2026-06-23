@@ -64,6 +64,7 @@ export function AppNavigator() {
             options={{
               title: 'Details',
               headerLargeTitle: false,
+              animation: 'slide_from_right',
             }}
           />
         </Stack.Navigator>

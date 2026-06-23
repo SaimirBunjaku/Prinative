@@ -1,11 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, {
+  FadeInDown,
+  FadeOutRight,
+} from 'react-native-reanimated';
 import { Task } from '../types/task';
+import { AnimatedCheckbox } from './AnimatedCheckbox';
 import { colors, spacing, typography } from '../constants/theme';
-import { lightImpact } from '../utils/haptics';
+import { duration, stagger } from '../constants/motion';
+import { lightImpact, successNotification } from '../utils/haptics';
 
 interface TaskItemProps {
   task: Task;
+  index: number;
   onPress: () => void;
   onToggle: () => void;
   onDelete: () => void;
@@ -13,8 +21,18 @@ interface TaskItemProps {
   isLast?: boolean;
 }
 
+function DeleteAction({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.deleteAction}>
+      <Ionicons name="trash" size={22} color="#FFFFFF" />
+      <Text style={styles.deleteLabel}>Delete</Text>
+    </Pressable>
+  );
+}
+
 export function TaskItem({
   task,
+  index,
   onPress,
   onToggle,
   onDelete,
@@ -22,60 +40,75 @@ export function TaskItem({
   isLast = false,
 }: TaskItemProps) {
   const handleToggle = async () => {
-    await lightImpact();
+    if (!task.completed) {
+      await successNotification();
+    } else {
+      await lightImpact();
+    }
     onToggle();
   };
 
   return (
-    <View
-      style={[
-        styles.wrapper,
-        isFirst && styles.wrapperFirst,
-        isLast && styles.wrapperLast,
-        !isLast && styles.wrapperBorder,
-      ]}
+    <Animated.View
+      entering={FadeInDown.delay(index * stagger.item)
+        .springify()
+        .damping(20)
+        .stiffness(180)}
+      exiting={FadeOutRight.duration(duration.normal)}
     >
-      <Pressable
-        onPress={handleToggle}
-        hitSlop={10}
-        style={({ pressed }) => [styles.checkboxHit, pressed && styles.pressed]}
+      <Swipeable
+        overshootRight={false}
+        friction={2}
+        rightThreshold={48}
+        renderRightActions={() => <DeleteAction onPress={onDelete} />}
+        containerStyle={[
+          styles.swipeContainer,
+          isFirst && styles.wrapperFirst,
+          isLast && styles.wrapperLast,
+        ]}
       >
-        <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-          {task.completed ? (
-            <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-          ) : null}
-        </View>
-      </Pressable>
-
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [styles.content, pressed && styles.pressed]}
-      >
-        <Text
-          style={[styles.title, task.completed && styles.titleDone]}
-          numberOfLines={1}
+        <View
+          style={[
+            styles.wrapper,
+            !isLast && styles.wrapperBorder,
+          ]}
         >
-          {task.title}
-        </Text>
-        {task.description ? (
-          <Text style={styles.description} numberOfLines={1}>
-            {task.description}
-          </Text>
-        ) : null}
-      </Pressable>
+          <AnimatedCheckbox completed={task.completed} onPress={handleToggle} />
 
-      <Pressable
-        onPress={onDelete}
-        hitSlop={10}
-        style={({ pressed }) => [styles.deleteHit, pressed && styles.pressed]}
-      >
-        <Ionicons name="trash-outline" size={20} color={colors.textTertiary} />
-      </Pressable>
-    </View>
+          <Pressable
+            onPress={onPress}
+            style={({ pressed }) => [styles.content, pressed && styles.pressed]}
+          >
+            <Text
+              style={[styles.title, task.completed && styles.titleDone]}
+              numberOfLines={1}
+            >
+              {task.title}
+            </Text>
+            {task.description ? (
+              <Text style={styles.description} numberOfLines={1}>
+                {task.description}
+              </Text>
+            ) : null}
+          </Pressable>
+
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={colors.textTertiary}
+            style={styles.chevron}
+          />
+        </View>
+      </Swipeable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  swipeContainer: {
+    backgroundColor: colors.groupedBackground,
+    overflow: 'hidden',
+  },
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,23 +129,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
   },
-  checkboxHit: {
-    paddingVertical: spacing.md,
-    paddingRight: spacing.md,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.textTertiary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxDone: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
   content: {
     flex: 1,
     paddingVertical: spacing.md,
@@ -131,10 +147,23 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: colors.textTertiary,
   },
-  deleteHit: {
-    padding: spacing.sm,
+  chevron: {
+    opacity: 0.35,
+    marginRight: 4,
   },
   pressed: {
     opacity: 0.55,
+  },
+  deleteAction: {
+    width: 88,
+    backgroundColor: colors.destructive,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  deleteLabel: {
+    ...typography.caption,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });

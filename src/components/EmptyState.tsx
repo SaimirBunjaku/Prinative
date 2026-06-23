@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, spacing, typography } from '../constants/theme';
 
 interface EmptyStateProps {
@@ -10,13 +11,16 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, message }: EmptyStateProps) {
   return (
-    <View style={styles.container}>
-      <View style={styles.iconWrap}>
+    <Animated.View
+      entering={FadeInUp.springify().damping(20).stiffness(160)}
+      style={styles.container}
+    >
+      <Animated.View entering={FadeInUp.delay(80).springify()} style={styles.iconWrap}>
         <Ionicons name={icon} size={40} color={colors.textTertiary} />
-      </View>
+      </Animated.View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
-    </View>
+    </Animated.View>
   );
 }
 

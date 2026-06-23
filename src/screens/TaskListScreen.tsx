@@ -1,19 +1,21 @@
-import { CompositeScreenProps, useNavigation } from '@react-navigation/native';
+import { CompositeScreenProps, useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
+import { ProgressBar } from '../components/ProgressBar';
+import { ScalePressable } from '../components/ScalePressable';
 import { SearchField } from '../components/SearchField';
 import { TaskItem } from '../components/TaskItem';
 import { useTaskContext } from '../context/TaskContext';
@@ -47,12 +49,12 @@ const EMPTY_CONFIG: Record<
   All: {
     icon: 'clipboard-outline',
     title: 'No Tasks Yet',
-    message: 'Tap the + button to add your first task.',
+    message: 'Tap + to add your first task.',
   },
   Pending: {
     icon: 'sunny-outline',
     title: 'All Caught Up',
-    message: 'You have no pending tasks. Enjoy the moment.',
+    message: 'Nothing pending. Enjoy the moment.',
   },
   Completed: {
     icon: 'checkmark-done-outline',
@@ -61,9 +63,11 @@ const EMPTY_CONFIG: Record<
   },
 };
 
-export function TaskListScreen({ route, navigation }: Props) {
+export function TaskListScreen({ route }: Props) {
   const stackNav = useNavigation<NativeStackScreenProps<RootStackParamList>['navigation']>();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
+  const scrollRef = useRef<ScrollView>(null);
   const statusFilter = TAB_FILTER[route.name];
   const screenTitle = TAB_TITLE[route.name];
 
@@ -93,6 +97,7 @@ export function TaskListScreen({ route, navigation }: Props) {
     });
   }, [allTasks, searchQuery, statusFilter]);
 
+  const completedCount = allTasks.filter((t) => t.completed).length;
   const pendingCount = allTasks.filter((t) => !t.completed).length;
   const isInitialLoading = loading && allTasks.length === 0;
   const hasSearch = searchQuery.trim().length > 0;
@@ -106,9 +111,19 @@ export function TaskListScreen({ route, navigation }: Props) {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+      };
+    }, [])
+  );
+
+  const isRefreshing = isFocused && loading && allTasks.length > 0;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
+      <Animated.View entering={FadeInDown.duration(400).springify()} style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.largeTitle}>{screenTitle}</Text>
           <Text style={styles.subtitle}>
@@ -118,31 +133,39 @@ export function TaskListScreen({ route, navigation }: Props) {
           </Text>
         </View>
 
-        <Pressable
+        <ScalePressable
           onPress={() => stackNav.navigate('AddTask')}
-          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
-          hitSlop={8}
+          style={styles.addButton}
         >
           <Ionicons name="add" size={28} color={colors.primary} />
-        </Pressable>
-      </View>
+        </ScalePressable>
+      </Animated.View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + spacing.xl },
         ]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={loading && allTasks.length > 0}
+            refreshing={isRefreshing}
             onRefresh={refreshFromApi}
             tintColor={colors.textTertiary}
           />
         }
-        showsVerticalScrollIndicator={false}
       >
-        <SearchField value={searchQuery} onChangeText={setSearchQuery} />
+        {route.name === 'All' && allTasks.length > 0 ? (
+          <Animated.View entering={FadeInDown.delay(60).springify()}>
+            <ProgressBar completed={completedCount} total={allTasks.length} />
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <SearchField value={searchQuery} onChangeText={setSearchQuery} />
+        </Animated.View>
 
         {error ? (
           <View style={styles.errorBanner}>
@@ -160,11 +183,7 @@ export function TaskListScreen({ route, navigation }: Props) {
           <EmptyState
             icon={hasSearch ? 'search-outline' : emptyConfig.icon}
             title={hasSearch ? 'No Results' : emptyConfig.title}
-            message={
-              hasSearch
-                ? 'Try a different search term.'
-                : emptyConfig.message
-            }
+            message={hasSearch ? 'Try a different search term.' : emptyConfig.message}
           />
         ) : (
           <View style={[styles.listGroup, shadows.card]}>
@@ -172,11 +191,10 @@ export function TaskListScreen({ route, navigation }: Props) {
               <TaskItem
                 key={task.id}
                 task={task}
+                index={index}
                 isFirst={index === 0}
                 isLast={index === tasks.length - 1}
-                onPress={() =>
-                  stackNav.navigate('TaskDetails', { taskId: task.id })
-                }
+                onPress={() => stackNav.navigate('TaskDetails', { taskId: task.id })}
                 onToggle={() => toggleTask(task.id)}
                 onDelete={() => handleDelete(task.id, task.title)}
               />
@@ -221,9 +239,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.sm,
-  },
-  pressed: {
-    opacity: 0.6,
   },
   scrollContent: {
     flexGrow: 1,

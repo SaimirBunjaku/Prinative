@@ -17,26 +17,28 @@ A simple React Native task management app built with Expo for the PRITECH techni
 - **Search** — filter tasks by title
 - **Status filter** — show All, Pending, or Done tasks
 - **Local persistence** — tasks saved with AsyncStorage
-- **Navigation** — React Navigation stack between list, add, and details screens
+- **Edit tasks** — update title and notes from the details screen
+- **Animations** — spring checkbox, swipe-to-delete, staggered list, progress bar, haptics
+- **Navigation** — bottom tabs (All / To Do / Done) + stack for add, edit, and details
 
 ## Tech Stack
 
 - React Native (Expo SDK 54 — compatible with Expo Go 54)
 - TypeScript
-- React Navigation (native stack)
-- AsyncStorage
-- Functional components and hooks
+- React Navigation (native stack + bottom tabs)
+- Reanimated 3 + Gesture Handler
+- AsyncStorage + Expo Haptics
 
 ## Project Structure
 
 ```
 src/
-├── components/     # Reusable UI (Button, TaskItem, SearchBar, EmptyState)
-├── constants/      # Theme colors and spacing
+├── components/     # UI (TaskItem, AnimatedCheckbox, ProgressBar, …)
+├── constants/      # Theme + motion tokens
 ├── context/        # TaskContext for shared state
-├── hooks/          # useTasks — CRUD, API, storage, search/filter
-├── navigation/     # AppNavigator and route types
-├── screens/        # TaskList, AddTask, TaskDetails
+├── hooks/          # useTasks — CRUD, API, storage, search
+├── navigation/     # Tabs + stack navigator
+├── screens/        # TaskList, TaskForm, TaskDetails
 ├── services/       # API fetch and AsyncStorage helpers
 └── types/          # Task type definitions
 ```
